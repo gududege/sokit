@@ -36,6 +36,7 @@ private slots:
 	void syncOutput();
 
 private:
+	qint64 parseFileSize(const QString& sizeStr);
 	const QString getLogFileName();
 	void writeLogFile(const QString& info);
 	void pack();
@@ -44,6 +45,7 @@ private:
 private:
 	QString m_dir;
 	QFile m_file;
+	qint64 m_maxSize;
 
 	QMenu m_cmlog, m_cmtxt;
     QCheckBox* m_chkWrite;

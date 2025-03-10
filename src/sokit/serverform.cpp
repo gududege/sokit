@@ -14,7 +14,7 @@
 
 #define SET_VAL_LGSVR  "log_server"
 
-ServerForm::ServerForm(QWidget *parent, Qt::WindowFlags flags)
+ServerForm::ServerForm(QWidget *parent, Qt::WFlags flags)
 : BaseForm(parent, flags)
 {
 	m_ui.setupUi(this);

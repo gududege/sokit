@@ -6,12 +6,15 @@
 #include <QClipboard>
 #include <QTreeWidget>
 #include <QPlainTextEdit>
+#include <QRegExp>
 #include "toolkit.h"
 #include "setting.h"
 #include "logger.h"
 
 #define SET_MAX_LOGITM  100
 #define SET_MAX_LOGTRM  30
+#define SET_KEY_LOGSIZE "/log/size"
+#define SET_VAL_LOGSIZE "10MB"
 
 Logger::Logger(QObject *parent)
 : QObject(parent),m_chkWrite(0),m_treeOut(0),m_textOut(0)
@@ -25,8 +28,11 @@ Logger::~Logger()
 
 void Logger::init(QTreeWidget* o, QCheckBox* w, QPlainTextEdit* d)
 {
+	Setting::set(SET_SEC_CFG, SET_KEY_LOGSIZE, Setting::get(SET_SEC_CFG, SET_KEY_LOGSIZE, SET_VAL_LOGSIZE).trimmed());
+	m_maxSize = parseFileSize(Setting::get(SET_SEC_CFG, SET_KEY_LOGSIZE, SET_VAL_LOGSIZE).trimmed());
+
 	m_cmlog.clear();
-	m_cmtxt.clear();
+	m_cmtxt.clear();	
 
 	if (m_treeOut)
 		m_treeOut->disconnect(this);
@@ -110,25 +116,57 @@ void Logger::copy()
 	}
 }
 
+qint64 Logger::parseFileSize(const QString& sizeStr) {
+    QRegExp regex("^(\\d+)([kKmMgG]?[bB]?)$");
+    if (regex.indexIn(sizeStr) != -1) {
+        QString numberStr = regex.cap(1);
+        QString unitStr = regex.cap(2).toLower();
+
+        qint64 number = numberStr.toLongLong();
+        if (unitStr.isEmpty()) {
+            return number;
+        } else if (unitStr.startsWith('k')) {
+            return number * 1024;
+        } else if (unitStr.startsWith('m')) {
+            return number * 1024 * 1024;
+        } else if (unitStr.startsWith('g')) {
+            return number * 1024 * 1024 * 1024;
+        }
+    }
+    return parseFileSize(SET_VAL_LOGSIZE); // parse error
+}
+
 const QString Logger::getLogFileName()
 {
-	int i = 0;
-	while (2 > i++)
-	{
-		if (!m_dir.isEmpty())
-		{
-			QDir d;
-			if (d.exists(m_dir) || d.mkpath(m_dir)) {
-				i = 0;
-				break;
-			}
-		}
+    int i = 0;
+    while (2 > i++)
+    {
+        if (!m_dir.isEmpty())
+        {
+            QDir d;
+            if (d.exists(m_dir) || d.mkpath(m_dir)) {
+                i = 0;
+                break;
+            }
+        }
 
         m_dir = Setting::path() + "/" + property(SET_SEC_DIR).toString();
-	}
+    }
 
-	return (i==2) ? QString() : m_dir + QDir::separator() + 
-		QDate::currentDate().toString("yyyyMMdd.log");
+    QString logFileName = m_dir + QDir::separator() + QDate::currentDate().toString("yyyy-MM-dd.log");
+    QFile file(logFileName);
+    if (file.exists()) {
+        qint64 fileSize = file.size();
+        if (fileSize >= m_maxSize) {
+            QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss-zzz");
+            QString newFileName = m_dir + QDir::separator() + timestamp + ".log";
+            if (file.rename(newFileName)) {
+                logFileName = m_dir + QDir::separator() + QDate::currentDate().toString("yyyy-MM-dd.log");
+            }
+        }
+    }
+
+    return (i==2) ? QString() : logFileName;
 }
 
 void Logger::writeLogFile(const QString& info)
@@ -207,7 +245,7 @@ void Logger::output(const QString& title, const QString& info)
 	QTreeWidgetItem* it = new QTreeWidgetItem(0);
 	if (!it) return;
 
-	QString lab(QTime::currentTime().toString("HH:mm:ss "));
+	QString lab(QDateTime::currentDateTime().toString("yyyy-MM-ddTHH:mm:ss.zzz "));
 	
 	lab += title;
 	lab += ' ';
@@ -225,7 +263,7 @@ void Logger::output(const QString& title, const QString& info)
 
 void Logger::output(const QString& title, const char* buf, quint32 len)
 {
-	QString lab(QTime::currentTime().toString("HH:mm:ss "));
+	QString lab(QDateTime::currentDateTime().toString("yyyy-MM-ddTHH:mm:ss.zzz "));
 	
 	QTextStream out(&lab);
 

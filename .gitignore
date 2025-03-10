@@ -1,3 +1,12 @@
-/bin
-/out
-/tmp
+# 排除 bin 目录
+bin/
+
+# 排除 tmp 目录
+tmp/
+
+# 排除 log 目录
+log/
+
+# 排除 build 目录
+build/*/build
+build/*/*.pro.user

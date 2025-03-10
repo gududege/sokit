@@ -11,7 +11,7 @@
 
 #define SET_VAL_LGCLT  "log_client"
 
-ClientForm::ClientForm(QWidget* p, Qt::WindowFlags f)
+ClientForm::ClientForm(QWidget* p, Qt::WFlags f)
 :BaseForm(p, f),m_client(0)
 {
 	m_ui.setupUi(this);
@@ -45,7 +45,8 @@ void ClientForm::initConfig()
 	Setting::lord(ssc+SET_KEY_CMBIP, SET_PFX_CMBITM, *m_ui.cmbAddr);
 	Setting::lord(ssc+SET_KEY_CMBPT, SET_PFX_CMBITM, *m_ui.cmbPort);
 
-	QString skl(SET_SEC_DIR); skl += SET_KEY_LOG;
+	QString skl(SET_SEC_DIR); 
+	skl += SET_KEY_LOG;
 	skl = Setting::get(skl, SET_KEY_CLT, SET_VAL_LGCLT);
 	setProperty(SET_SEC_DIR, skl);
 
@@ -58,7 +59,8 @@ void ClientForm::saveConfig()
 	Setting::save(ssc+SET_KEY_CMBIP, SET_PFX_CMBITM, *m_ui.cmbAddr);
 	Setting::save(ssc+SET_KEY_CMBPT, SET_PFX_CMBITM, *m_ui.cmbPort);
 
-	QString skl(SET_SEC_DIR); skl += SET_KEY_LOG;
+	QString skl(SET_SEC_DIR); 
+	skl += SET_KEY_LOG;
 	Setting::set(skl, SET_KEY_CLT, property(SET_SEC_DIR).toString());
 }
 
